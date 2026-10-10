@@ -510,6 +510,9 @@ def main():
         page.fill("#st-n", "Ana"); page.fill("#st-l", "admin"); page.fill("#st-s", "Senha@123"); page.check("#st-d"); page.click("#st-btn")
         page.wait_for_selector("#nav"); page.wait_for_selector(".kpis", timeout=20000)
 
+        import re as _re
+        check("Barra superior mostra hora (HH:MM), data e turno", _re.fullmatch(r"\d{2}:\d{2}", page.inner_text("#rh-time")) and "Turno da" in page.inner_text("#rh-turno") and len(page.inner_text("#rh-date")) > 12)
+        check("Não exibe 'Base compartilhada'", "Base compartilhada" not in page.inner_text(".topbar"))
         # Equipamentos: campo Setor no lugar de Sala
         open_cad(page, "equipamentos")
         hdr = page.inner_text("thead")

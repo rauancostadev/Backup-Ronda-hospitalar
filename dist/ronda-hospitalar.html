@@ -373,6 +373,17 @@ input[type=text],input[type=password],input[type=number],input[type=date],input[
 #app{min-height:100vh;min-height:100dvh}
 .auth{min-height:100vh;min-height:100dvh}
 
+/* relógio institucional */
+.topbar{padding:10px clamp(16px,3vw,34px);border-top:3px solid var(--brand);gap:16px}
+.clock{display:flex;gap:14px;align-items:center;min-width:0}
+.clock .hora{font-size:30px;font-weight:650;line-height:1;letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;padding-right:14px;border-right:2px solid var(--line2)}
+.clock .dt{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.clock .dt b{font-size:15px;font-weight:600;color:var(--ink)}
+.clock .dt span{font-size:12.5px;color:var(--brand);font-weight:600}
+.foot{padding:14px clamp(16px,3vw,34px);border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+@media (max-width:560px){.clock .hora{font-size:24px;padding-right:10px}.clock .dt b{font-size:13.5px}}
+@media print{.foot,.topbar{display:none}}
+
 </style>
 </head>
 <body>
@@ -1201,7 +1212,7 @@ function rondaForm(){
     if(!ks.length)return `<div class="grp noitems"><div class="gh">${ico}<div class="t"><b>${tagTipo(al.a)}${esc(al.n)}</b><small>Sem checklist vinculado${st.me.role==='admin'?' · vincule em Cadastros':''}</small></div></div></div>`;
     const cal=al.eq?.calibracao?RH.calBadge(al.eq.calibracao):'';
     return `<div class="grp"><div class="gh">${ico}<div class="t"><b>${tagTipo(al.a)}${esc(al.n)}</b><small>${al.eq?`<span class="mono">${esc(al.eq.patrimonio||'sem patrimônio')}</span> · ${esc(al.eq.categoria||'')}`:esc(al.cl?.nome||'')}</small> ${cal}</div><button class="btn sm" data-act="allc" data-pre="${prefix(bl.id,al)}">Tudo conforme</button></div><div class="items">${ks.map(itemHtml).join('')}</div></div>`}).join('')};
-  return `<div class="top"><div><h1>${esc(R.nome)}</h1><p>${nSalas} sala${nSalas===1?'':'s'} · ${nEq} equipamento${nEq===1?'':'s'} · Responsável: ${R.resp?esc(userName(R.resp)):'todos os inspetores'} · Inspetor: ${esc(st.me.nome)}</p></div>
+  return `<div class="top"><div><h1>${esc(R.nome)}</h1><p>${nSalas} sala${nSalas===1?'':'s'} · ${nEq} equipamento${nEq===1?'':'s'} · Início às ${new Date(R.started).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · Responsável: ${R.resp?esc(userName(R.resp)):'todos os inspetores'} · Inspetor: ${esc(st.me.nome)}</p></div>
   <button class="btn" data-act="cancelRonda">${ic('x',16)} Descartar ronda</button></div>
   <div class="rhead"><div class="prog"><b id="prog-t"></b><div class="bar"><i id="prog-b" style="width:0"></i></div></div><button class="btn pri" data-act="submitRonda" id="btn-sub">${ic('check',16)} Finalizar ronda</button></div>
   ${guia.length?`<details class="card guide"><summary>Orientações por tipo de não conformidade</summary><div class="guide-l">${guia.map(t=>`<div><b>${esc(t.nome)}</b> ${RH.sevPill(t.sev||2)}<p>${esc(t.orient)}</p></div>`).join('')}</div></details>`:''}
@@ -1879,10 +1890,21 @@ function renderShell(){
   <nav class="nav" id="nav" aria-label="Principal">${allowedPages().map(p=>`<button data-act="nav" data-p="${p[0]}">${ic(p[2])}<span>${p[1]}</span></button>`).join('')}</nav>
   <div class="side-foot"><div class="me"><div class="avatar">${esc(ini)}</div><div><b>${esc(me.nome)}</b><span>${RH.ROLE[me.role]||''}</span></div></div>
   <div class="row"><button class="ghost-d" data-act="minhaSenha" aria-label="Alterar minha senha" title="Alterar minha senha">${ic('key')}<span>Senha</span></button><button class="ghost-d" data-act="theme" aria-label="Alternar tema">${ic('moon')}<span>Tema</span></button><button class="ghost-d" data-act="logout" aria-label="Sair">${ic('out')}<span>Sair</span></button></div></div></aside>
-  <div class="work"><div class="topbar"><div class="l"><span>${esc(new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}))}</span></div>
-  <div class="r">${RH.store&&RH.store.mode==='remote'?'<span class="sync"><i></i>Base compartilhada</span>':'<span class="sync loc" title="Os dados ficam só neste aparelho"><i></i>Modo local</span>'}<span class="role">${esc(RH.ROLE[me.role]||'')}</span></div></div>
-  <main id="main"></main></div></div>`;
+  <div class="work"><div class="topbar"><div class="clock" aria-label="Data e horário atuais"><time id="rh-time" class="hora"></time><div class="dt"><b id="rh-date"></b><span id="rh-turno"></span></div></div>
+  <div class="r">${RH.store&&RH.store.mode==='remote'?'':'<span class="sync loc" title="Os dados ficam só neste aparelho"><i></i>Modo local</span>'}<span class="role">${esc(RH.ROLE[me.role]||'')}</span></div></div>
+  <main id="main"></main><footer class="foot">Informações confidenciais · uso interno da instituição</footer></div></div>`;
+  tickClock();clearInterval(RH.clockT);RH.clockT=setInterval(tickClock,1000);
   RH.renderView();
+}
+
+/* relógio da barra superior: hora, data por extenso e turno (manhã 6–12 h, tarde 12–18 h, noite 18–6 h) */
+function tickClock(){
+  const t=document.getElementById('rh-time');if(!t){clearInterval(RH.clockT);return}
+  const d=new Date(),h=d.getHours(),hh=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if(t.textContent!==hh){t.textContent=hh;t.dateTime=d.toISOString();
+    const ds=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    document.getElementById('rh-date').textContent=ds.charAt(0).toUpperCase()+ds.slice(1);
+    document.getElementById('rh-turno').textContent='Turno da '+(h>=6&&h<12?'manhã':h>=12&&h<18?'tarde':'noite')}
 }
 
 RH.go=p=>{if(!RH.access.can(p))return;st.page=p;RH.renderView(true);scrollTo(0,0)};
