@@ -25,7 +25,9 @@ function renderShell(){
   <nav class="nav" id="nav" aria-label="Principal">${allowedPages().map(p=>`<button data-act="nav" data-p="${p[0]}">${ic(p[2])}<span>${p[1]}</span></button>`).join('')}</nav>
   <div class="side-foot"><div class="me"><div class="avatar">${esc(ini)}</div><div><b>${esc(me.nome)}</b><span>${RH.ROLE[me.role]||''}</span></div></div>
   <div class="row"><button class="ghost-d" data-act="minhaSenha" aria-label="Alterar minha senha" title="Alterar minha senha">${ic('key')}<span>Senha</span></button><button class="ghost-d" data-act="theme" aria-label="Alternar tema">${ic('moon')}<span>Tema</span></button><button class="ghost-d" data-act="logout" aria-label="Sair">${ic('out')}<span>Sair</span></button></div></div></aside>
-  <main id="main"></main></div>`;
+  <div class="work"><div class="topbar"><div class="l"><span>${esc(new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}))}</span></div>
+  <div class="r">${RH.store&&RH.store.mode==='remote'?'<span class="sync"><i></i>Base compartilhada</span>':'<span class="sync loc" title="Os dados ficam só neste aparelho"><i></i>Modo local</span>'}<span class="role">${esc(RH.ROLE[me.role]||'')}</span></div></div>
+  <main id="main"></main></div></div>`;
   RH.renderView();
 }
 

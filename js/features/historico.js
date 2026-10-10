@@ -31,14 +31,15 @@ function openRonda(id){
     ${Object.values(g).map(x=>`<div style="margin-top:10px"><b>${esc(x.n)}</b><div style="margin-top:4px">${x.l.map(i=>`<div style="display:flex;gap:10px;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)"><span>${esc(i.t)}</span><span style="flex:none" class="pill ${i.r==='C'?'okp':i.r==='NC'?'st-aberta':'off'}">${i.r==='C'?'Conforme':i.r==='NC'?'Não conforme':'N/A'}</span></div>`).join('')}</div></div>`).join('')}</div>`}).join('');
   const obs=e.docs.map(r=>r.obs).find(Boolean),nNC=ncsDa(e).length;
   modal(`<div class="mh"><div><h3 style="font-size:16px">${esc(e.nome)}</h3><small>${fdt(e.ts)} · Inspetor: ${esc(e.inspNome)}</small></div><button class="ic-btn" data-act="closeModal" aria-label="Fechar">${ic('x',16)}</button></div>
-  <div class="mb"><div class="legend"><span>Conformidade <b>${pc(e.pct)}</b></span><span>Conformes <b>${e.c}</b></span><span>Não conformes <b>${e.nc}</b></span><span>N/A <b>${e.na}</b></span></div>
+  <div class="mb"><div class="print-only rep-h"><b>${esc(S.cfg.hospital||'Ronda Hospitalar')}</b><span>Relatório de ronda · ${esc(e.nome)} · ${fdt(e.ts)} · Inspetor: ${esc(e.inspNome)}</span></div><div class="legend"><span>Conformidade <b>${pc(e.pct)}</b></span><span>Conformes <b>${e.c}</b></span><span>Não conformes <b>${e.nc}</b></span><span>N/A <b>${e.na}</b></span></div>
   ${obs?`<div><b>Observações</b><p style="margin:4px 0 0">${esc(obs)}</p></div>`:''}
-  ${porSala}</div>
+  ${porSala}<div class="print-only rep-f"><div>Inspetor: ${esc(e.inspNome)}</div><div>Responsável pelo setor</div></div></div>
   <div class="mf">${RH.access.canDeleteRonda()?`<button type="button" class="btn bad sp" data-act="delRonda" data-id="${esc(e.id)}" id="btn-delronda">${ic('trash',16)} Excluir ronda</button>
     <label class="chk" style="margin-right:auto"><input type="checkbox" id="del-ncs" ${nNC?'':'disabled'}> Excluir também as ${nNC} não conformidade${nNC===1?'':'s'} geradas</label>`:''}
-    <button type="button" class="btn" data-act="closeModal">Fechar</button></div>`,true);
+    <button type="button" class="btn" data-act="printRonda">Imprimir relatório</button><button type="button" class="btn" data-act="closeModal">Fechar</button></div>`,true);
 }
 /* exclusão em dois toques; apaga os documentos da execução e, se marcado, as NCs (e fotos) */
+function imprimir(){document.body.classList.add('print-modal');const f=()=>{document.body.classList.remove('print-modal');removeEventListener('afterprint',f)};addEventListener('afterprint',f);print()}
 async function delRonda(el){
   if(!RH.access.canDeleteRonda())return;
   if(!el.dataset.armed){el.dataset.armed='1';el.textContent='Confirmar exclusão';return}
@@ -52,4 +53,5 @@ async function delRonda(el){
 }
 RH.ACT.rondaOpen=el=>openRonda(el.dataset.id);
 RH.ACT.delRonda=delRonda;
+RH.ACT.printRonda=imprimir;
 })();
